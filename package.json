@@ -1,0 +1,27 @@
+{
+    "scripts":  {
+                    "test:e2e":  "playwright test",
+                    "test":  "jest",
+                    "test:unit":  "jest --testPathPattern=unit",
+                    "test:integration":  "jest --testPathPattern=integration",
+                    "dev":  "docker-compose up -d",
+                    "deploy":  ".\\scripts\\deploy.sh"
+                },
+    "description":  "AI-Powered Emergency Coordination for Hospitality",
+    "version":  "1.0.0",
+    "author":  "Ayush Singh Bais",
+    "name":  "rapid-crisis-response-platform",
+    "main":  "index.js",
+    "devDependencies":  {
+                            "playwright":  "^1.40.0",
+                            "jest":  "^29.0.0"
+                        },
+    "license":  "Apache-2.0",
+    "keywords":  [
+                     "crisis-response",
+                     "hospitality",
+                     "emergency",
+                     "ai",
+                     "google-cloud"
+                 ]
+}
