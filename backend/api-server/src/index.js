@@ -94,13 +94,110 @@ app.get('/api/resources', (req, res) => {
 });
 
 app.post('/api/resources/allocate', (req, res) => {
-  const { incident_id, resource_id } = req.body;
+  const { incident_id, resource_id, resource_type, quantity, priority, notes } = req.body;
   res.json({
     incident_id,
     resource_id,
+    resource_type,
+    quantity,
+    priority,
+    notes,
     allocated_at: new Date(),
     status: 'ALLOCATED'
   });
+});
+
+// ==================== ANALYTICS ====================
+
+app.get('/api/analytics', (req, res) => {
+  res.json({
+    incident_trend: [
+      { label: 'Mon', value: 3 },
+      { label: 'Tue', value: 7 },
+      { label: 'Wed', value: 5 },
+      { label: 'Thu', value: 12 },
+      { label: 'Fri', value: 8 },
+      { label: 'Sat', value: 4 },
+      { label: 'Sun', value: 6 }
+    ],
+    response_times: [
+      { label: 'Mon', value: 4 },
+      { label: 'Tue', value: 3 },
+      { label: 'Wed', value: 5 },
+      { label: 'Thu', value: 2 },
+      { label: 'Fri', value: 3 },
+      { label: 'Sat', value: 4 },
+      { label: 'Sun', value: 3 }
+    ],
+    ai_confidence_trend: [
+      { label: 'Mon', value: 88 },
+      { label: 'Tue', value: 91 },
+      { label: 'Wed', value: 89 },
+      { label: 'Thu', value: 94 },
+      { label: 'Fri', value: 93 },
+      { label: 'Sat', value: 96 },
+      { label: 'Sun', value: 94 }
+    ],
+    service_health: [
+      { service: 'API Server', uptime: 99.8 },
+      { service: 'Gemini Service', uptime: 97.5 },
+      { service: 'Vertex AI', uptime: 98.2 },
+      { service: 'Vision Service', uptime: 96.9 },
+      { service: 'WebSocket', uptime: 99.1 }
+    ]
+  });
+});
+
+// ==================== ALERTS ====================
+
+app.post('/api/alerts', (req, res) => {
+  const { alert_type, message, recipients } = req.body;
+  res.status(201).json({
+    id: 'ALERT-' + Date.now(),
+    alert_type,
+    message,
+    recipients,
+    sent_at: new Date(),
+    status: 'SENT'
+  });
+});
+
+app.get('/api/alerts', (req, res) => {
+  res.json({
+    alerts: [
+      { id: 'ALERT-001', alert_type: 'FIRE', message: 'Fire detected in east wing', sent_at: new Date(), status: 'SENT' },
+      { id: 'ALERT-002', alert_type: 'EVACUATION', message: 'Evacuation in progress', sent_at: new Date(), status: 'SENT' }
+    ]
+  });
+});
+
+// ==================== LOGS ====================
+
+app.get('/api/logs', (req, res) => {
+  const { level, limit = 50 } = req.query;
+  const levels = ['ERROR', 'WARN', 'INFO', 'DEBUG'];
+  const services = ['api-server', 'gemini-service', 'vertex-ai', 'vision-service'];
+  const messages = {
+    ERROR: ['Connection timeout', 'Authentication failed', 'API rate limit exceeded'],
+    WARN: ['High memory usage', 'Response time slow', 'Cache miss rate high'],
+    INFO: ['Incident updated', 'Resource allocated', 'Health check passed'],
+    DEBUG: ['Query executed in 12ms', 'Cache hit', 'Token refreshed']
+  };
+
+  const logs = Array.from({ length: Number(limit) }, (_, i) => {
+    const logLevel = level && level !== 'ALL' ? String(level) : levels[Math.floor(Math.random() * levels.length)];
+    const service = services[Math.floor(Math.random() * services.length)];
+    const msgList = messages[logLevel] || messages['INFO'];
+    return {
+      id: i + 1,
+      timestamp: new Date(Date.now() - i * 2000).toISOString(),
+      level: logLevel,
+      service,
+      message: msgList[Math.floor(Math.random() * msgList.length)]
+    };
+  });
+
+  res.json({ logs, total: logs.length });
 });
 
 // ==================== ERROR HANDLING ====================
