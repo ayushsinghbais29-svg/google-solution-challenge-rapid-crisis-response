@@ -1,6 +1,4 @@
-﻿version: '3.8'
-
-services:
+﻿services:
   api-server:
     build: ./backend/api-server
     ports:
@@ -13,18 +11,26 @@ services:
     build: ./backend/gemini-service
     ports:
       - "3001:3001"
+    environment:
+      - PORT=3001
 
   vertex-ai-service:
     build: ./backend/vertex-ai-service
     ports:
       - "3002:3002"
+    environment:
+      - PORT=3002
 
   vision-service:
     build: ./backend/vision-service
     ports:
       - "3003:3003"
+    environment:
+      - PORT=3003
 
   websocket-server:
     build: ./backend/websocket-server
     ports:
       - "8080:8080"
+    environment:
+      - PORT=8080
