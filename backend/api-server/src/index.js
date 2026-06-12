@@ -11,8 +11,16 @@ app.use(express.json());
 
 // ==================== ROUTES ====================
 
-// Health Check
+// Health Check (both paths for compatibility)
 app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date(),
+    service: 'api-server'
+  });
+});
+
+app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date(),
