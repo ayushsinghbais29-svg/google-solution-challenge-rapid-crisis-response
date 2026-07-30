@@ -1,87 +1,114 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import './index.css';
+import SystemStatus from './components/SystemStatus';
+import IncidentManager from './components/IncidentManager';
+import AIAnalysis from './components/AIAnalysis';
+import Resources from './components/Resources';
+import Analytics from './components/Analytics';
+import SendAlert from './components/SendAlert';
+import GenerateReport from './components/GenerateReport';
+import ViewLogs from './components/ViewLogs';
+import { NotificationContainer, NotificationItem, createNotification } from './components/Notification';
+
+const API_BASE = 'http://localhost:3000';
+
+interface Incident {
+  id: string;
+  threat_type: string;
+  severity: string;
+  status: string;
+  location?: { lat: number; lng: number };
+  description?: string;
+  created_at?: string;
+}
 
 const App: React.FC = () => {
-  const [incidents, setIncidents] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [darkMode, setDarkMode] = useState(false);
+  const [loadingIncidents, setLoadingIncidents] = useState(false);
+
+  const notify = useCallback((message: string, type: 'success' | 'error' | 'warning' | 'info') => {
+    setNotifications((prev) => createNotification(prev, message, type));
+  }, []);
+
+  const dismissNotification = useCallback((id: number) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
+  const fetchIncidents = useCallback(async () => {
+    setLoadingIncidents(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/incidents`);
+      const data = await response.json();
+      setIncidents(data.incidents || []);
+    } catch {
+      // Show mock data when API is offline
+      setIncidents([
+        {
+          id: 'INC-001',
+          threat_type: 'FIRE',
+          severity: 'CRITICAL',
+          status: 'ACTIVE',
+          location: { lat: 40.7128, lng: -74.0060 },
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setLoadingIncidents(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchIncidents();
-  }, []);
+  }, [fetchIncidents]);
 
-  const fetchIncidents = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('http://localhost:3000/api/incidents');
-      const data = await response.json();
-      setIncidents(data.incidents);
-    } catch (error) {
-      console.error('Error fetching incidents:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleIncidentCreated = (incident: Incident) => {
+    setIncidents((prev) => [incident, ...prev]);
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>🚨 Rapid Crisis Response Dashboard</h1>
-      
-      <div style={{ marginBottom: '20px' }}>
-        <h2>Active Incidents</h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : incidents.length === 0 ? (
-          <p>No incidents</p>
-        ) : (
-          <div>
-            {incidents.map((incident: any) => (
-              <div 
-                key={incident.id}
-                style={{
-                  border: '1px solid #ccc',
-                  padding: '10px',
-                  marginBottom: '10px',
-                  borderRadius: '5px',
-                  backgroundColor: incident.severity === 'CRITICAL' ? '#ffcccc' : '#fff'
-                }}
-              >
-                <h3>{incident.id}</h3>
-                <p><strong>Type:</strong> {incident.threat_type}</p>
-                <p><strong>Severity:</strong> {incident.severity}</p>
-                <p><strong>Status:</strong> {incident.status}</p>
-                <p><strong>Location:</strong> ({incident.location.lat}, {incident.location.lng})</p>
-              </div>
-            ))}
-          </div>
-        )}
+    <div className={`app-container${darkMode ? ' dark-mode' : ''}`}>
+      {/* Header */}
+      <div className="header">
+        <h1>🚨 Rapid Crisis Response Dashboard</h1>
+        <div className="header-actions">
+          <button
+            className="theme-toggle"
+            onClick={fetchIncidents}
+            disabled={loadingIncidents}
+            title="Refresh all data"
+          >
+            {loadingIncidents ? '⏳ Refreshing…' : '🔄 Refresh'}
+          </button>
+          <button
+            className="theme-toggle"
+            onClick={() => setDarkMode((d) => !d)}
+            title="Toggle dark mode"
+          >
+            {darkMode ? '☀️ Light' : '🌙 Dark'}
+          </button>
+        </div>
       </div>
 
-      <div style={{ marginTop: '30px' }}>
-        <h2>Dashboard Features</h2>
-        <ul>
-          <li>✅ Real-time Incident Heatmap</li>
-          <li>✅ Live Event Timeline</li>
-          <li>✅ Resource Allocation (Drag & Drop)</li>
-          <li>✅ Communication Hub</li>
-          <li>✅ AI Recommendations</li>
-          <li>✅ Analytics Dashboard</li>
-          <li>✅ First Responder Board</li>
-        </ul>
+      {/* Dashboard Grid */}
+      <div className="dashboard-grid">
+        <SystemStatus />
+        <IncidentManager
+          incidents={incidents}
+          onIncidentCreated={handleIncidentCreated}
+          onNotify={notify}
+        />
+        <AIAnalysis onNotify={notify} />
+        <Resources onNotify={notify} />
+        <Analytics onNotify={notify} />
+        <SendAlert onNotify={notify} />
+        <GenerateReport onNotify={notify} />
+        <ViewLogs onNotify={notify} />
       </div>
 
-      <button 
-        onClick={fetchIncidents}
-        style={{
-          padding: '10px 20px',
-          marginTop: '20px',
-          backgroundColor: '#007bff',
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer'
-        }}
-      >
-        Refresh Incidents
-      </button>
+      {/* Notifications */}
+      <NotificationContainer notifications={notifications} onDismiss={dismissNotification} />
     </div>
   );
 };
